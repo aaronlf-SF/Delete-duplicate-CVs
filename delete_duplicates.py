@@ -56,12 +56,21 @@ def delete_duplicates():
 	ITERATE THROUGH AND DELETE CVS
 	'''
 	emailAddressFirst = 'genesis'
+	firstOccurence = 'first'
+	uniqueCount = 0
+	
 	for file in sorted(filesDict):
 		emailAddressSecond = find_email_address(file)
 		if emailAddressFirst == emailAddressSecond or emailAddressSecond == '':
 			os.remove(PATH+file)
 			print(file + ' deleted.')
+			
+			if emailAddressSecond != firstOccurence:
+				uniqueCount += 1
+			firstOccurence = emailAddressSecond
+			
 		emailAddressFirst = emailAddressSecond
+	print('Number of unique deletions:',uniqueCount)
 	
 
 #======================================================================
@@ -69,3 +78,4 @@ def delete_duplicates():
 
 if __name__ == '__main__':
 	main()
+	
