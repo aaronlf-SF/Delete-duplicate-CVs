@@ -10,4 +10,4 @@ By specifying 'PATH' to the directory of the CVs, duplicate CVs can be detected 
 
 At time of writing, this script only supports .docx and .pdf file formats. ~~It is hoped that .odt and .rtf formats will be possible to implement also.~~ The formats .odt and .rtf will not be implemented by this software. This is because the number of files is so low that it would not be worth the time investment. 
 
-It appears that .doc files (1997-2003 Word documents) are now possible to implement! (12/07/2018)
+It appears that .doc files (1997-2003 Word documents) are now possible to implement! (13/07/2018)
