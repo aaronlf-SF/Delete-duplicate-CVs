@@ -2,7 +2,8 @@ import os
 from os.path import isfile, join
 
 import pdf_read as pr
-import docx_read as dr
+import docx_read as dxr
+import doc_read as dr
 
 
 #======================================================================
@@ -28,10 +29,13 @@ def organise_files():
 	global PATH
 	onlyFiles = sorted([f for f in os.listdir(PATH) if isfile(join(PATH, f))])
 	for filename in onlyFiles:
-		if '.docx' in filename:
+		if '.docx' in filename[-5:]:
 			filesDict[filename] = '.docx'
-		elif '.pdf' in filename:
+		if '.doc' in filename[-4:]:
+			filesDict[filename] = '.doc'
+		elif '.pdf' in filename[-4:]:
 			filesDict[filename] = '.pdf'
+		print(info,'\n')
 		
 		
 def find_email_address(filename):
@@ -39,12 +43,18 @@ def find_email_address(filename):
 	FIND EMAIL ADDRESSES CONTAINED IN FILES	
 	'''
 	global PATH
+	emailAddress = ''
 	if filesDict[filename] == '.docx':
-		text = dr.docx_to_text(PATH+filename)
+		text = dxr.docx_to_text(PATH+filename)
+	if filesDict[filename] == '.doc':
+		text = dr.doc_to_text(PATH+filename)
 	elif filesDict[filename] == '.pdf':
 		text = pr.pdf_to_text(PATH+filename)
+	if text == 'error':
+		print('error -',filename)
+		emailAddress = 'error'
+		return emailAddress
 		
-	emailAddress = ''
 	for word in text.split():
 		if '@' in word:
 			emailAddress = word
@@ -55,15 +65,23 @@ def delete_duplicates():
 	'''
 	ITERATE THROUGH AND DELETE CVS
 	'''
+	global PATH
 	emailAddressFirst = 'genesis'
 	firstOccurence = 'first'
-	uniqueCount = 0
+	uniqueCount = 70
 	
 	for file in sorted(filesDict):
-		emailAddressSecond = find_email_address(file)
+		try:
+			emailAddressSecond = find_email_address(file)
+		except:
+			print('Error encountered when processing ' + file + '. Moved to exceptions folder.')
+			emailAddressSecond = 'error'
+			os.rename(PATH+file, PATH+'caught exceptions/'+file)
+			
 		if emailAddressFirst == emailAddressSecond or emailAddressSecond == '':
-			os.remove(PATH+file)
-			print(file + ' deleted.')
+			if emailAddressSecond != 'error':
+				os.remove(PATH+file)
+			print(uniqueCount,file + ' deleted.')
 			
 			if emailAddressSecond != firstOccurence:
 				uniqueCount += 1
