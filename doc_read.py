@@ -8,11 +8,13 @@ def convert_backslash(string):
 	
 	
 def doc_to_text(fullPath):
-	fullPath = convert_backslash(fullPath)
-	app = win32com.client.Dispatch('Word.Application')
-	doc = app.Documents.Open(fullPath)
-	output_text = doc.Content.Text
-	app.Quit()
-	print(output_text)
+	try:
+		fullPath = convert_backslash(fullPath)
+		app = win32com.client.Dispatch('Word.Application')
+		doc = app.Documents.Open(fullPath)
+		output_text = doc.Content.Text
+		app.Quit()
+	except:
+		output_text = 'error'
 	return output_text
 	

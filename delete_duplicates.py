@@ -9,7 +9,7 @@ import doc_read as dr
 #======================================================================
 
 
-PATH = 'C:/Users/AFitzpatrick/Desktop/Programming/testing/ciara c/'
+PATH = 'C:/Users/AFitzpatrick/Desktop/Programming/testing/'
 filesDict = {} #dictionary of the form {filename : file extension}
 
 
@@ -91,8 +91,14 @@ def delete_duplicates():
 				uniqueCount += 1
 				totalCount += 1
 			elif emailAddress == 'error':
-				print('Error encountered when processing ' + file + '. Moved to exceptions folder.')
-				os.rename(PATH+file, PATH+'caught exceptions/'+file+'/')
+				if filesDict[file] == '.doc':
+					print('Error encountered when processing ' + file + '. Note made in docs.txt.')
+					with open(PATH + 'docs.txt','a') as txt:
+						txt.write(file + '\n')
+				else:
+					print('Error encountered when processing ' + file + '. Moved to exceptions folder.')
+					os.rename(PATH+file, PATH+'caught exceptions/'+file+'/')
+					
 
 			else:
 			
@@ -181,6 +187,10 @@ def find_latest_year(text):
 			if word == year:
 				years_found.append(years[year])
 	for word in text.split('-'):
+		for year in list(years.keys()):
+			if word == year:
+				years_found.append(years[year])
+	for word in text.split('.'):
 		for year in list(years.keys()):
 			if word == year:
 				years_found.append(years[year])
