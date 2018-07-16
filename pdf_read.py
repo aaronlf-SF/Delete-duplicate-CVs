@@ -21,12 +21,11 @@ def pdf_to_text(path):
         for page in PDFPage.get_pages(fp, pagenos, maxpages=maxpages, password=password,caching=caching, check_extractable=True):
             interpreter.process_page(page)
         text = retstr.getvalue()
-
-        fp.close()
-        device.close()
-        retstr.close()
     except:
         text = 'error'
+    fp.close()
+    device.close()
+    retstr.close()
     return text
 
 #print(pdf_to_text('C:/Users/AFitzpatrick/Desktop/Programming/testing/PM-3128.pdf'))

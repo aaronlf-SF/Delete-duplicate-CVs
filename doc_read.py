@@ -4,7 +4,7 @@ from os.path import isfile, join
 
 
 def convert_backslash(string):
-	return string.replace('/','\\\\')
+	return string.replace('/','\\')
 	
 	
 def doc_to_text(fullPath):
@@ -13,4 +13,6 @@ def doc_to_text(fullPath):
 	doc = app.Documents.Open(fullPath)
 	output_text = doc.Content.Text
 	app.Quit()
+	print(output_text)
 	return output_text
+	
