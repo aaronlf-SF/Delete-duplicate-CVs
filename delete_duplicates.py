@@ -1,6 +1,11 @@
 import os
 from os.path import isfile, join
 
+import threading
+import time
+
+import pythoncom
+
 import pdf_read as pr
 import docx_read as dxr
 import doc_read as dr
@@ -9,7 +14,7 @@ import doc_read as dr
 #======================================================================
 
 
-PATH = 'C:/Users/AFitzpatrick/Desktop/Programming/testing/'
+PATH = 'C:/Users/AFitzpatrick/Desktop/Programming/testing/ciara h/'
 filesDict = {} #dictionary of the form {filename : file extension}
 
 
@@ -40,20 +45,9 @@ def organise_files():
 			print(filename,'not organised')
 		
 		
+#======================================================================
 
-def extract_text(filename):
-	global PATH
-	if filesDict[filename] == '.docx':
-		text = dxr.docx_to_text(PATH+filename)
-	if filesDict[filename] == '.doc':
-		text = dr.doc_to_text(PATH+filename)
-	elif filesDict[filename] == '.pdf':
-		text = pr.pdf_to_text(PATH+filename)
-	#print(text,'\n',filename)
-	return text	
-	
-		
-		
+
 def find_email_address(filename,text):
 	'''
 	FIND EMAIL ADDRESSES CONTAINED IN FILES	
@@ -70,19 +64,55 @@ def find_email_address(filename,text):
 	return emailAddress
 
 
+def extract_text(filename):
+	global PATH
+	if filesDict[filename] == '.docx':
+		text = dxr.docx_to_text(PATH+filename)
+	if filesDict[filename] == '.doc':
+		text = dr.doc_to_text(PATH+filename)
+	elif filesDict[filename] == '.pdf':
+		text = pr.pdf_to_text(PATH+filename)
+	#print(text,'\n',filename)
+	return text	
+	
+	
+def extract_text_on_time(file):
+	pythoncom.CoInitialize()
+	global textFound,output_text
+	output_text = extract_text(file)
+	textFound = True
+
+		
+def getText(file):
+	global textFound,output_text
+	textFound = False
+		
+	thread = threading.Thread(target=extract_text_on_time,args=(file,),daemon=True)
+	thread.start()
+	thread.join(timeout=10)
+	
+	if textFound == False:
+		output_text = 'error'
+	return output_text
+
+		
+#======================================================================
+
+		
 def delete_duplicates():
 	'''
 	ITERATE THROUGH AND DELETE CVS
 	'''
 	global PATH
-	uniqueCount = 0
-	totalCount = 0
+	uniqueCount = 6646
+	totalCount = 13000
 	filenames_and_emails = {}
 	
 	for file in sorted(filesDict):
+		print(file)
 		filesDeleted = False
 		try:
-			text = extract_text(file)
+			text = getText(file)
 			emailAddress = find_email_address(file,text)
 			if emailAddress == '':
 				#remove files with no email addresses
