@@ -61,7 +61,7 @@ def find_email_address(filename,text):
 		
 	for word in text.split():
 		if '@' in word:
-			emailAddress = word
+			emailAddress = word.lower()
 			break
 	return emailAddress
 
