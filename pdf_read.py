@@ -15,7 +15,7 @@ def pdf_to_text(path):
     interpreter = PDFPageInterpreter(rsrcmgr, device)
     password = ""
     maxpages = 0
-    caching = True
+    caching = True	
     pagenos=set()
     try:
         for page in PDFPage.get_pages(fp, pagenos, maxpages=maxpages, password=password,caching=caching, check_extractable=True):

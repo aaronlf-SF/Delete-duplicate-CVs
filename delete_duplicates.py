@@ -3,6 +3,7 @@ from os.path import isfile, join
 
 import threading
 import time
+import pandas as pd
 
 import pythoncom
 
@@ -89,7 +90,7 @@ def getText(file):
 		
 	thread = threading.Thread(target=extract_text_on_time,args=(file,),daemon=True)
 	thread.start()
-	thread.join(timeout=10)
+	thread.join(timeout=45)
 	
 	if textFound == False:
 		output_text = 'error'
@@ -98,18 +99,19 @@ def getText(file):
 		
 #======================================================================
 
-		
+
 def delete_duplicates():
 	'''
 	ITERATE THROUGH AND DELETE CVS
 	'''
-	global PATH
-	uniqueCount = 6646
+	global PATH,totalCount,uniqueCount
+	uniqueCount = 7500
 	totalCount = 13000
 	filenames_and_emails = {}
 	
+
 	for file in sorted(filesDict):
-		print(file)
+		print(uniqueCount,file)
 		filesDeleted = False
 		try:
 			text = getText(file)
@@ -120,110 +122,184 @@ def delete_duplicates():
 				print(uniqueCount,file + ' deleted.')
 				uniqueCount += 1
 				totalCount += 1
-			elif emailAddress == 'error':
-				if filesDict[file] == '.doc':
-					print('Error encountered when processing ' + file + '. Note made in docs.txt.')
-					with open(PATH + 'docs.txt','a') as txt:
-						txt.write(file + '\n')
-				else:
-					print('Error encountered when processing ' + file + '. Moved to exceptions folder.')
-					os.rename(PATH+file, PATH+'caught exceptions/'+file+'/')
-					
-
-			else:
-			
-				if file == sorted(filesDict)[-1]:
-						latestYear = find_latest_year(text)
-						filenames_and_emails[file] = {'email':emailAddress, 'latestYear':latestYear}
-						
-				if len(list(filenames_and_emails.keys())) > 0: #prevents call to an empty dictionary
-					if emailAddress not in list(filenames_and_emails.values())[0]['email'] or file == sorted(filesDict)[-1]:
-					
-						#find latest year
-						years = []
-						for i in filenames_and_emails:
-							years.append(filenames_and_emails[i]['latestYear'])
-						maxYear = max(years)
-						
-						#delete all but that one in that year
-						duplicate_files = [f for f in filenames_and_emails if filenames_and_emails[f]['latestYear'] == maxYear]
-						safeFile = duplicate_files[0]
-
-						for filename in filenames_and_emails:
-							if filename != safeFile:
-								os.remove(PATH+filename)
-								print(uniqueCount,filename + ' deleted.')
-								filesDeleted = True
-								totalCount += 1
-			
-						filenames_and_emails.clear()
-						if filesDeleted == True:
-							uniqueCount += 1
 				
+			elif emailAddress == 'error':
+				#remove email addresses with errors
+				print('Error encountered when processing ' + file + 'Removing.')
+				os.remove(PATH+file)
+				uniqueCount += 1
+				totalCount += 1
+			else:
+				compare_and_remove_files(file,emailAddress,filenames_and_emails,text)
+
 				latestYear = find_latest_year(text)
 				filenames_and_emails[file] = {'email':emailAddress, 'latestYear':latestYear}
 
 				
-		except:
-			print('Error encountered when processing ' + file + '. Moved to exceptions folder.')
-			os.rename(PATH+file, PATH+'caught exceptions/'+file)
+		except Exception as e:
+			print(e)
+			print('Error encountered when processing ' + file + '. Note made in bad eggs.txt.')
+			with open(PATH + 'bad eggs.txt','a') as txt:
+				txt.write(file + '\n')
 			
 	print('Number of unique deletions:',uniqueCount)
 	print('Total number of deletions:',totalCount)
 
+	
 #======================================================================
 
 
+def compare_and_remove_files(file,emailAddress,filenames_and_emails,text):
+	latestYear = find_latest_year(text)
+	if file == sorted(filesDict)[-1]: # LAST FILE IN THE DIRECTORY
+		filenames_and_emails[file] = {'email':emailAddress, 'latestYear':latestYear}
+						
+	if len(list(filenames_and_emails.keys())) > 0: #prevents call to an empty dictionary
+		if emailAddress not in list(filenames_and_emails.values())[0]['email'] or file == sorted(filesDict)[-1]:
+			maxYear = get_max_year(filenames_and_emails)
+			safeFile = keep_safe_file(filenames_and_emails,maxYear)
+			email = list(filenames_and_emails.values())[0]['email']
+			filenames_and_emails.clear()
+				
+			safeDict = {'filename':[safeFile],'email':[email],'latestYear':[maxYear]}
+			compare_against_dataset_file(safeDict)
+		'''if file == sorted(filesDict)[-1]:
+			fileDict = {'filename':[file],'email':[emailAddress],'latestYear':[latestYear]}
+			compare_against_dataset_file(fileDict)'''	
+	else:
+		fileDict = {'filename':[file],'email':[emailAddress],'latestYear':[latestYear]}
+		compare_against_dataset_file(fileDict)			
+					
+					
+def get_max_year(filenames_and_emails):
+	years = []
+	for i in filenames_and_emails:
+		years.append(filenames_and_emails[i]['latestYear'])
+	return max(years)
+							
+							
+							
+def keep_safe_file(filenames_and_emails,maxYear):
+	'''
+	delete all but that one in that year
+	'''
+	global totalCount, uniqueCount
+	duplicate_files = [f for f in filenames_and_emails if filenames_and_emails[f]['latestYear'] == maxYear]
+	safeFile = duplicate_files[0]
+	initial_totalCount = totalCount
+	
+	for filename in filenames_and_emails:
+		if filename != safeFile:
+			os.remove(PATH+filename)
+			print(uniqueCount,filename + ' deleted.')
+			totalCount += 1
+	if totalCount != initial_totalCount:
+		uniqueCount += 1
+		
+	return safeFile
+	
+
+#======================================================================
+	
+	
+def compare_against_dataset_file(safeDict):
+	global PATH, uniqueCount,totalCount
+	try:
+		df = csv_to_df()
+	except FileNotFoundError:
+		df = pd.DataFrame.from_dict(safeDict)
+		df = df.drop(df.index[0])
+	else:
+		pandasExists = False
+		for i in range(df.count(0)['filename']):
+			if df.iloc[i]['email'] == safeDict['email'][0]:
+				pdIndex = i
+				pandasExists = True
+				
+		if pandasExists == True:
+			pdLatestYear = df.iloc[pdIndex]['latestYear']
+			maxYear = max([pdLatestYear,safeDict['latestYear'][0]])
+			if maxYear ==  safeDict['latestYear'][0]:
+				print(df.iloc[pdIndex]['filename'],'deleted and dropped from dataframe.')
+				os.remove(PATH+df.iloc[pdIndex]['filename'])
+				df.drop(df.index[pdIndex])
+				new_df = pd.DataFrame.from_dict(safeDict)
+				df = df.append(new_df,ignore_index=True)
+			else:
+				os.remove(PATH + safeDict['filename'][0])
+				print(safeDict['filename'][0],'deleted.')
+			uniqueCount += 1
+			totalCount += 1
+		else:
+			new_df = pd.DataFrame.from_dict(safeDict)
+			df = df.append(new_df,ignore_index=True)
+	df_to_csv(df)
+	
+	
+		
+def df_to_csv(df):
+	global PATH
+	df.to_csv(PATH+'data.csv',index=False)
+
+	
+def csv_to_df():
+	global PATH
+	df = pd.read_csv(PATH+'data.csv')
+	return df
+
+	
+#======================================================================
+
 def find_latest_year(text):
 	years = {
-			'1990':1990,
-			'1991':1991,
-			'1992':1992,
-			'1993':1993,
-			'1994':1994,
-			'1995':1995,
-			'1996':1996,
-			'1997':1997,
-			'1998':1998,
-			'1999':1999,
-			'2000':2000,
-			'2001':2001,
-			'2002':2002,
-			'2003':2003,
-			'2004':2004,
-			'2005':2005,
-			'2006':2006,
-			'2007':2007,
-			'2008':2008,
-			'2009':2009,
-			'2010':2010,
-			'2011':2011,
-			'2012':2012,
-			'2013':2013,
-			'2014':2014,
-			'2015':2015,
-			'2016':2016,
-			'2017':2017,
-			'2018':2018
+			1990:['1990',"'90",'90'],
+			1991:['1991',"'91",'91'],
+			1992:['1992',"'92",'92'],
+			1993:['1993',"'93",'93'],
+			1994:['1994',"'94",'94'],
+			1995:['1995',"'95",'95'],
+			1996:['1996',"'96",'96'],
+			1997:['1997',"'97",'97'],
+			1998:['1998',"'98",'98'],
+			1999:['1999',"'99",'99'],
+			2000:['2000',"'00",'00'],
+			2001:['2001',"'01",'01'],
+			2002:['2002',"'02",'02'],
+			2003:['2003',"'03",'03'],
+			2004:['2004',"'04",'04'],
+			2005:['2005',"'05",'05'],
+			2006:['2006',"'06",'06'],
+			2007:['2007',"'07",'07'],
+			2008:['2008',"'08",'08'],
+			2009:['2009',"'09",'09'],
+			2010:['2010',"'10",'10'],
+			2011:['2011',"'11",'11'],
+			2012:['2012',"'12",'12'],
+			2013:['2013',"'13",'13'],
+			2014:['2014',"'14",'14'],
+			2015:['2015',"'15",'15'],
+			2016:['2016',"'16",'16'],
+			2017:['2017',"'17",'17'],
+			2018:['2018',"'18",'18'],
 			}
 
 	years_found = []
 	for word in text.split():
 		for year in list(years.keys()):
-			if word == year:
-				years_found.append(years[year])
+			if word in years[year][:2]:
+				years_found.append(year)
 	for word in text.split('/'):
 		for year in list(years.keys()):
-			if word == year:
-				years_found.append(years[year])
+			if word in years[year]:
+				years_found.append(year)
 	for word in text.split('-'):
 		for year in list(years.keys()):
-			if word == year:
-				years_found.append(years[year])
+			if word in years[year]:
+				years_found.append(year)
 	for word in text.split('.'):
 		for year in list(years.keys()):
-			if word == year:
-				years_found.append(years[year])
+			if word in years[year]:
+				years_found.append(year)
 	if len(years_found) > 0:			
 		latestYear = max(years_found)
 	else:
