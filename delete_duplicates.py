@@ -62,6 +62,7 @@ def find_email_address(filename,text):
 	for word in text.split():
 		if '@' in word:
 			emailAddress = word
+			break
 	return emailAddress
 
 
