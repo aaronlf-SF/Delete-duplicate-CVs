@@ -11,3 +11,14 @@ By specifying 'PATH' to the directory of the CVs, duplicate CVs can be detected 
 At time of writing, this script only supports .docx and .pdf file formats. ~~It is hoped that .odt and .rtf formats will be possible to implement also.~~ The formats .odt and .rtf will not be implemented by this software. This is because the number of files is so low that it would not be worth the time investment. 
 
 It appears that .doc files (1997-2003 Word documents) are now possible to implement! (13/07/2018)
+
+
+### Extra additions made:
+
+#### (16/07/2018)
+When deleting duplicates, CVs are organized by date and the most recent one is kept, instead of doing it randomly
+
+
+#### (18/07/2018)
+All files within a folder containing the same email address will be compared and all but one will get deleted. This is an innovation far superior to the previous script, which could only compare two documents that were one next to another in alphabetical order.
+
