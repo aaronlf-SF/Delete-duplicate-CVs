@@ -15,7 +15,7 @@ import doc_read as dr
 #======================================================================
 
 
-PATH = 'C:/Users/AFitzpatrick/Desktop/Programming/testing/ciara h/'
+PATH = 'C:/Users/AFitzpatrick/Desktop/Programming/testing/[CONSULTANT NAME]/'
 filesDict = {} #dictionary of the form {filename : file extension}
 
 
@@ -105,8 +105,8 @@ def delete_duplicates():
 	ITERATE THROUGH AND DELETE CVS
 	'''
 	global PATH,totalCount,uniqueCount
-	uniqueCount = 7500
-	totalCount = 13000
+	uniqueCount = 0
+	totalCount = 0
 	filenames_and_emails = {}
 	
 
@@ -227,7 +227,7 @@ def compare_against_dataset_file(safeDict):
 				df = df.append(new_df,ignore_index=True)
 			else:
 				os.remove(PATH + safeDict['filename'][0])
-				print(safeDict['filename'][0],'deleted.')
+				print(safeDict['filename'][0],'deleted. (Newer version in dataframe)')
 			uniqueCount += 1
 			totalCount += 1
 		else:
