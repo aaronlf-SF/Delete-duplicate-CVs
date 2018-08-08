@@ -129,7 +129,6 @@ def delete_duplicates():
 	totalCount = 0
 	filenames_and_emails = {}
 	
-
 	for file in sorted(filesDict):
 		print(uniqueCount,file)
 		filesDeleted = False
@@ -151,11 +150,9 @@ def delete_duplicates():
 				totalCount += 1
 			else:
 				compare_and_remove_files(file,emailAddress,filenames_and_emails,text)
-
 				latestYear = find_latest_year(text)
 				filenames_and_emails[file] = {'email':emailAddress, 'latestYear':latestYear}
 
-				
 		except Exception as e:
 			print(e)
 			print('Error encountered when processing ' + file + '. Note made in bad eggs.txt.')
@@ -305,7 +302,7 @@ def find_latest_year(text):
 				if word == year_format:
 					years_found.append(year)
 	
-	for word in ( text.split('/') + text.split('-') text.split('.') ):
+	for word in ( text.split('/') + text.split('-') + text.split('.') ):
 		for year_format in years[year]:
 				if word == year_format:
 					years_found.append(year)
